@@ -1,0 +1,54 @@
+org: joshsummer
+app: aws-node-express-dynamodb-api
+service: aws-node-express-dynamodb-api
+frameworkVersion: '3'
+
+custom:
+  tableName: 'users-table-${sls:stage}'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ UsersTable, Arn ]
+  environment:
+    USERS_TABLE: empleados
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /empleado
+      - httpApi:
+          method: GET
+          path: /empleado/:userId
+      - httpApi:
+          method: POST
+          path: /empleado
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: empleados
