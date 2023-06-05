@@ -1,4 +1,4 @@
-const Employee = require("../models/employee");
+const EmployeeModel = require("../models/employee");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
   DynamoDBDocumentClient,
@@ -20,48 +20,54 @@ class EmployeeRepository {
     this.dynamoDbClient = DynamoDBDocumentClient.from(this.database);
   }
 
-  async create(employeeid,name,cargo,edad) {
-    const params = {
+  async create(employeeid, name, age, cargo) {
+    let params = {
       TableName: this.tableName,
       Item: {
         employeeid: employeeid,
         name: name,
+        age: age,
         cargo: cargo,
-        edad: edad,
       },
     };
     await this.dynamoDbClient.send(new PutCommand(params));
-    return {success:true,data:params.Item}
+    return {
+      success: true,
+      data: new EmployeeModel(
+        params.Item.employeeid,
+        params.Item.name,
+        params.Item.age,
+        params.Item.cargo
+      ).get(),
+    };
   }
 
   async get() {
-    const params = {
-        TableName: this.tableName,
-      };
+    let params = {
+      TableName: this.tableName,
+    };
     const items = await this.dynamoDbClient.send(new ScanCommand(params));
-    console.log(items);
-    let response;
-    if (items) {
-      console.log("aca estamos")
-      response = items.Items.map((x) => {
-        let empployee = new Employee(x.employeeid,  x.name,  x.cargo, x.edad );
-        return  empployee.get()
-      });
-    }
-    console.log(response)
-    return response;
+
+    return {
+      success: true,
+      data: items.Items.map((x) => {
+        return new EmployeeModel(x.employeeid, x.name, x.age, x.cargo).get();
+      }),
+    };
   }
   async getById(employeeid) {
-    const params = {
-      TableName: this.tableName,
-      Key: {
-        employeeid: employeeid
-      }
+    let params = {
+      TableName: "employee",
     };
-    console.log(params);
-    let data = await this.dynamoDbClient.send(new GetCommand(params));
-    console.log(data)
-    return {success:true,data:data.Item}
+    let data = await this.dynamoDbClient.send(new ScanCommand(params));
+    let filter = data.Items.filter((x) => x.employeeid == employeeid);
+    console.log(filter);
+    return {
+      success: true,
+      data: filter.map((x) => {
+        return new EmployeeModel(x.employeeid, x.name, x.age, x.cargo).get();
+      }),
+    };
   }
 }
 

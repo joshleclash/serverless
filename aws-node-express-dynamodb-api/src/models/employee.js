@@ -1,12 +1,17 @@
-class Employee{
-    constructor(employeeid,name,age,cargo){
-        this.employeeid;
-        this.name;
-        this.age;
-        this.cargo;
-    }
-    get(){
-        return {employeeid:this.employeeid,age:this.age,name:this.name,cargo:this.cargo}
-    }
+class EmployeeModel {
+  constructor(employeeid, name, age, cargo) {
+    this.employeeid = employeeid;
+    this.name = name;
+    this.age = age;
+    this.cargo = cargo;
+  }
+  get() {
+    return {
+      'employeeid': this.employeeid,
+      'name': this.name,
+      'age': this.age,
+      'cargo': this.cargo,
+    };
+  }
 }
-module.exports = Employee;
+module.exports = EmployeeModel;
