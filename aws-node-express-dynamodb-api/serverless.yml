@@ -4,7 +4,23 @@ service: aws-node-express-dynamodb-api
 frameworkVersion: '3'
 
 custom:
-  tableName: 'users-table-${sls:stage}'
+  #tableName: 'users-table-${sls:stage}'
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      #inMemory: true
+      #heapInitial: 200m
+      #heapMax: 1g
+      migrate: true
+      #seed: false
+      #convertEmptyValues: true
+      #docker: true
+  serverless-offline:
+    httpPort: 3000
+    lamdaPort: 3001      
+
 
 provider:
   name: aws
@@ -23,7 +39,7 @@ provider:
           Resource:
             - Fn::GetAtt: [ UsersTable, Arn ]
   environment:
-    USERS_TABLE: empleados
+    USERS_TABLE: employee #${self:custom.tableName}
 
 functions:
   api:
@@ -34,7 +50,7 @@ functions:
           path: /empleado
       - httpApi:
           method: GET
-          path: /empleado/:userId
+          path: /empleado/{employeeid}
       - httpApi:
           method: POST
           path: /empleado
@@ -44,11 +60,38 @@ resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: employee
         AttributeDefinitions:
-          - AttributeName: userId
+          - AttributeName: employeeid
             AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: age
+            AttributeType: S
+          - AttributeName: cargo
+            AttributeType: S      
         KeySchema:
-          - AttributeName: userId
+          - AttributeName: employeeid
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        TableName: empleados
+          - AttributeName: name
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5            
+        GlobalSecondaryIndexes:
+          - IndexName: age_cargo
+            KeySchema: 
+              - AttributeName: age
+                KeyType: HASH
+              - AttributeName: cargo
+                KeyType: RANGE  
+            Projection:
+              NonKeyAttributes: []
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5            
+        
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
